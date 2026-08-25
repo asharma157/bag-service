@@ -1,11 +1,11 @@
 # bag-service
 
-Backend layer of the [cookie-based per-layer version routing POC](../bag-ui/README.md).
+Backend layer of the [cookie-based per-layer version routing POC](https://github.com/asharma157/bag-ui).
 Java 17 / Spring Boot. Returns the hardcoded contents of a customer's bag (cart). No database,
 no auth, no persistent state.
 
 **The full POC — the cookie model, the mesh routing, local validation, GKE deployment and the
-demo script — is documented in the [bag-ui](../bag-ui/README.md) repo.** This README covers only
+demo script — is documented in the [bag-ui](https://github.com/asharma157/bag-ui) repo.** This README covers only
 what is specific to this service.
 
 ## Its version is selected by the `bag_service` cookie
