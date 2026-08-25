@@ -1,0 +1,16 @@
+server:
+  port: 8080
+  # Istio/Envoy terminates the client connection; keep the app tolerant of idle keep-alives.
+  tomcat:
+    connection-timeout: 20s
+
+bag:
+  layer: bag-service
+  # In Kubernetes this is fed by the downward API from the pod's `version` label,
+  # so the running pod always reports the version it was actually labelled with.
+  version: ${APP_VERSION:1.9}
+  instance: ${POD_NAME:${HOSTNAME:local}}
+
+logging:
+  level:
+    root: INFO
