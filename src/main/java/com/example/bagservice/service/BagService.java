@@ -26,7 +26,7 @@ public class BagService {
             new BagItem("itm-001", "TOTE-CLS-BLK", "Classic Leather Tote", "Black", "Large", 1, 189.00),
             new BagItem("itm-002", "CROSS-LTH-TAN", "Leather Crossbody", "Tan", "Small", 1, 129.50),
             new BagItem("itm-003", "BPK-CNV-NVY", "Canvas Backpack", "Navy", "Medium", 2, 74.25),
-            new BagItem("itm-004", "DUF-WKD-OLV", "Weekender Duffel", "Olive", "Large", 1, 215.00));
+            new BagItem("itm-004", "DUF-WKD-OLV", "Weekender Duffel LV", "Olive", "Large", 1, 2215.00));
 
     private final String version;
 
