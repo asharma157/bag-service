@@ -14,20 +14,29 @@ what is specific to this service.
 nothing here selects a version, and callers always address this service at the constant
 `http://bag-service:8080/api/bags`.
 
-Versions shipped, each returning a visibly different item list so routing is verifiable at a
-glance:
+The bag contents are a plain hardcoded list in
+[`service/BagService.java`](src/main/java/com/example/bagservice/service/BagService.java) —
+whatever this branch of the code says they are. `main` currently returns four items totalling
+$682.00.
 
-| Version | Items | Subtotal |
-|---|---|---|
-| `1.9` (default) | 3 — tote, crossbody, backpack | $467.00 |
-| `1.10` | 4 — adds a Weekender Duffel, repriced tote | $662.00 |
-| `feature1` | 2 — monogrammed tote, gift pouch | $256.00 |
+### Shipping a version with different contents
 
-The lists live in [`service/BagService.java`](src/main/java/com/example/bagservice/service/BagService.java),
-keyed by version, so one image can be deployed as any version and the POC stays cheap to run. In
-a real pipeline each version is a distinct build of a distinct source revision and that map is
-simply the difference between two commits. The pod's `version` label picks the list — never
-anything in the request.
+Two versions differ because their code differs. Branch, edit the list, deploy the branch as its
+own version:
+
+```bash
+git checkout -b feature1
+# edit ITEMS in src/main/java/com/example/bagservice/service/BagService.java
+cp k8s/deployment-1-9.yaml k8s/deployment-feature1.yaml
+# in the copy: name -> bag-service-feature1, version label -> feature1 (three places)
+git commit -am "feature1: seasonal cart"
+git push -u origin feature1
+```
+
+The Deploy workflow builds the branch name as the version, so branch `feature1` ships version
+`feature1` and runs alongside whatever `main` is serving. From then on `bag_service=feature1`
+routes to it, and everyone without that cookie keeps getting `main`'s contents — which is the
+entire point of the POC.
 
 ## Structure
 
@@ -36,7 +45,7 @@ One controller, one service:
 | File | Role |
 |---|---|
 | [`web/BagController.java`](src/main/java/com/example/bagservice/web/BagController.java) | `GET /api/bags`, `GET /health` |
-| [`service/BagService.java`](src/main/java/com/example/bagservice/service/BagService.java) | the hardcoded item lists |
+| [`service/BagService.java`](src/main/java/com/example/bagservice/service/BagService.java) | the hardcoded item list |
 | [`routing/RoutingContextFilter.java`](src/main/java/com/example/bagservice/routing/RoutingContextFilter.java) | captures the routing context |
 
 This is the last hop, so it has nothing to propagate to — instead it **echoes back** the routing
@@ -53,12 +62,11 @@ APP_VERSION=1.9 java -jar target/bag-service-0.0.1-SNAPSHOT.jar --server.port=80
 
 | Env var | Default | Purpose |
 |---|---|---|
-| `APP_VERSION` | `1.9` | the version this instance reports and serves; in Kubernetes it comes from the pod's `version` label via the downward API |
+| `APP_VERSION` | `1.9` | the version this instance reports; in Kubernetes it comes from the pod's `version` label via the downward API |
 | `POD_NAME` | hostname | instance identity, stamped on responses |
 
-A pod labelled with a version that has no item list of its own serves the `1.9` list and reports
-the mismatch as `catalogueVersion` rather than failing. Every response carries
-`x-bag-service-version` and `x-bag-service-instance`.
+The injected version is reported, never consulted: it identifies which build answered a request.
+Every response carries `x-bag-service-version` and `x-bag-service-instance`.
 
 ## Deploy
 

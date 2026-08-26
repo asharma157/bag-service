@@ -40,7 +40,6 @@ public class BagController {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("layer", layer);
         body.put("version", bagService.version());
-        body.put("catalogueVersion", bagService.catalogueVersion());
         body.put("instance", instance);
         body.put("servedAt", Instant.now().toString());
         body.put("routingContextReceived", routing.asReportedMap());
