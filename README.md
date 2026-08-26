@@ -21,22 +21,40 @@ $682.00.
 
 ### Shipping a version with different contents
 
-Two versions differ because their code differs. Branch, edit the list, deploy the branch as its
-own version:
+Two versions differ because their code differs. Branch, edit the list, then deploy the branch:
 
 ```bash
-git checkout -b feature1
+git checkout -b feature/bag-new
 # edit ITEMS in src/main/java/com/example/bagservice/service/BagService.java
-cp k8s/deployment-1-9.yaml k8s/deployment-feature1.yaml
-# in the copy: name -> bag-service-feature1, version label -> feature1 (three places)
-git commit -am "feature1: seasonal cart"
-git push -u origin feature1
+git commit -am "new cart contents"
+git push -u origin feature/bag-new
 ```
 
-The Deploy workflow builds the branch name as the version, so branch `feature1` ships version
-`feature1` and runs alongside whatever `main` is serving. From then on `bag_service=feature1`
-routes to it, and everyone without that cookie keeps getting `main`'s contents — which is the
-entire point of the POC.
+**Pushing runs CI only — it does not deploy.** CI builds and smoke-tests the branch; no image is
+pushed to the registry. To ship it, run the Deploy workflow manually:
+
+```bash
+gh workflow run deploy.yml --repo asharma157/bag-service --ref feature/bag-new
+```
+
+or in GitHub: **Actions → Deploy → Run workflow →** pick the branch, leave *version* blank.
+
+The version is derived from the branch name, lowercased and made tag-safe, so `feature/bag-new`
+ships as version **`feature-bag-new`** — that is the value to put in the cookie. If no
+`k8s/deployment-feature-bag-new.yaml` exists, the workflow renders one from the default version's
+manifest; commit it if the version is here to stay.
+
+### Deploying a version does not move traffic
+
+New pods join the `bag-service` Service, which spans every version. What keeps the default at
+100% is the **catch-all route** at the end of the bag-service VirtualService: unless a request
+matches a cookie rule above it, it goes to the default subset. Add a match rule (Kiali, or YAML)
+to make `bag_service=feature-bag-new` reach the new pods; until you do, the new version is
+deployed and reachable but takes no traffic.
+
+> Without a VirtualService at all, the Service load-balances across every version's pods — so a
+> second version would immediately take a share of default traffic. The catch-all is what makes
+> "deploy freely, route deliberately" true.
 
 ## Structure
 
